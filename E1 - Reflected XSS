@@ -1,0 +1,32 @@
+# Reflected XSS — Security Training Write-up
+
+## Overview
+During a security training exercise assigned by my supervisor, I identified a reflected cross-site scripting (XSS) issue in a search feature.
+
+This write-up documents the root cause and remediation. The affected domain and executable URL are intentionally omitted pending coordinated disclosure.
+
+## Root Cause
+The application inserted the `searchstring` parameter into the single-quoted `href` attributes of sorting links without appropriate output encoding.
+
+A single quote in the input could terminate the attribute value, allowing injected HTML to be interpreted by the browser.
+
+Although the search term was escaped in the visible results text, it was not consistently encoded in the generated links.
+
+## Verification
+A proof of concept triggered a JavaScript alert, confirming script execution. This demonstrated reflected XSS; it did not establish account compromise or data theft.
+
+## Potential Impact
+An attacker could craft a malicious link that executes JavaScript in the affected site's origin when opened by another user. The impact depends on the victim's permissions and the application's security controls.
+
+## Remediation
+- URL-encode individual query parameters.
+- HTML-escape the complete URL before inserting it into an attribute, including both quote types.
+- Apply context-aware output encoding consistently.
+- Use Content Security Policy as defense in depth, not as a replacement for encoding.
+
+For PHP, construct query strings with `http_build_query()` and escape attribute values with `htmlspecialchars()` using `ENT_QUOTES | ENT_SUBSTITUTE` and UTF-8.
+
+## Key Takeaway
+Escaping input in one location does not make every use of that input safe. Output encoding must match each rendering context.
+
+**Classification:** CWE-79 — Reflected Cross-Site Scripting
